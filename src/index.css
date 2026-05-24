@@ -138,3 +138,11 @@
   outline: 2px solid var(--color-vermillion);
   outline-offset: 2px;
 }
+
+@layer base {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 360ms;
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+}

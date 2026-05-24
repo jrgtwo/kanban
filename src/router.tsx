@@ -6,7 +6,8 @@ import {
 } from '@tanstack/react-router'
 import { RootLayout } from './layouts/RootLayout'
 import { ProjectsIndex } from './routes/ProjectsIndex'
-import { ProjectBoard } from './routes/ProjectBoard'
+import { ProjectBoardRoute } from './routes/ProjectBoardRoute'
+import { SubBoardRoute } from './routes/SubBoardRoute'
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -33,10 +34,16 @@ const indexRoute = createRoute({
 const projectRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/p/$projectId',
-  component: ProjectBoard,
+  component: ProjectBoardRoute,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, projectRoute])
+const subBoardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/p/$projectId/c/$cardId',
+  component: SubBoardRoute,
+})
+
+const routeTree = rootRoute.addChildren([indexRoute, projectRoute, subBoardRoute])
 
 export const router = createRouter({ routeTree })
 

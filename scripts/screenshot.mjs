@@ -21,13 +21,13 @@ async function seed(page) {
     const Dexie = (await import('/node_modules/dexie/dist/modern/dexie.mjs'))
       .default
     const db = new Dexie('ledger')
-    db.version(1).stores({
+    db.version(2).stores({
       projects: 'id, name, createdAt',
-      columns: 'id, projectId, order, [projectId+order]',
-      tasks: 'id, projectId, columnId, order, [columnId+order]',
+      columns: 'id, projectId, parentCardId, order, [projectId+order], [parentCardId+order]',
+      cards: 'id, projectId, parentCardId, columnId, order, type, [columnId+order]',
     })
-    await db.transaction('rw', db.projects, db.columns, db.tasks, async () => {
-      await db.tasks.clear()
+    await db.transaction('rw', db.projects, db.columns, db.cards, async () => {
+      await db.cards.clear()
       await db.columns.clear()
       await db.projects.clear()
     })
@@ -161,11 +161,12 @@ async function seed(page) {
       for (const [colName, items] of Object.entries(set)) {
         const col = colByName[colName]
         if (!col) continue
-        await db.tasks.bulkAdd(
+        await db.cards.bulkAdd(
           items.map((t, i) => ({
             id: nid(),
             projectId: project.id,
             columnId: col.id,
+            type: 'task',
             title: t.title,
             notes: t.notes,
             order: i,

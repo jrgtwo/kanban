@@ -16,7 +16,7 @@ export function ProjectsIndex() {
     const out: Record<string, number> = {}
     await Promise.all(
       projects.map(async (p) => {
-        out[p.id] = await db.tasks.where({ projectId: p.id }).count()
+        out[p.id] = await db.cards.where({ projectId: p.id }).count()
       }),
     )
     return out

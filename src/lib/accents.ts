@@ -1,7 +1,7 @@
-import type { Project } from '../db/types'
+export type Accent = 'vermillion' | 'ochre' | 'moss' | 'ink'
 
 export const ACCENT_TOKENS: Record<
-  Project['accent'],
+  Accent,
   { swatch: string; ink: string; label: string }
 > = {
   vermillion: {
