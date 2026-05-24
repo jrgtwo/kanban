@@ -646,7 +646,10 @@ function TaskCardView({
         aria-hidden
       />
       {editing ? (
-        <div onPointerDown={(e) => e.stopPropagation()}>
+        <div
+          onPointerDown={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
