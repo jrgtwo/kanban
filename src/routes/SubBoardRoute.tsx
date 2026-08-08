@@ -1,34 +1,52 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from '@tanstack/react-router'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { createColumn, db, updateCard } from '../db/db'
+import { useBoard, useCardActions, useColumnActions } from '../api/hooks'
 import { Board } from '../board/Board'
 import { Breadcrumb } from '../board/Breadcrumb'
 
 export function SubBoardRoute() {
   const { projectId, cardId } = useParams({ from: '/p/$projectId/c/$cardId' })
-  const project = useLiveQuery(() => db.projects.get(projectId), [projectId])
-  const card = useLiveQuery(() => db.cards.get(cardId), [cardId])
-  const childColumnCount = useLiveQuery(
-    () => db.columns.where({ parentCardId: cardId }).count(),
-    [cardId],
-  )
+
+  const { data: board, isFetched } = useBoard({ projectId, parentCardId: cardId })
+  const project = board?.project
+  // The card itself lives on the PARENT board, not on the sub-board it opens.
+  const { data: parentBoard } = useBoard({ projectId })
+  const card = parentBoard?.cards.find((c) => c.id === cardId)
+
+  const { createColumn } = useColumnActions()
+  const { updateCard } = useCardActions()
 
   const [editingTitle, setEditingTitle] = useState(false)
   const [draft, setDraft] = useState('')
 
+  // A ref, not state: nothing renders differently while seeding, and setting
+  // state inside the effect that reads it is the cascading-render pattern the
+  // lint rule is there to catch.
+  const seeding = useRef(false)
+
+  /**
+   * A sub-board opens empty the first time, so it gets the same four columns a
+   * project does.
+   *
+   * ⚠ Guarded on `isFetched`, not on the count alone. Before the first response
+   * lands there is no board at all, and "no columns yet" and "haven't asked yet"
+   * would otherwise look identical — seeding on the second creates four columns
+   * on every mount. `seeding` covers the window between firing the creates and
+   * the refetch reporting them.
+   */
   useEffect(() => {
-    if (card?.type !== 'subboard') return
-    if (childColumnCount === 0) {
+    if (card?.type !== 'subboard' || !isFetched || seeding.current) return
+    if (board && board.columns.length === 0) {
+      seeding.current = true
       void (async () => {
         const scope = { projectId, parentCardId: cardId }
-        await createColumn(scope, 'Backlog')
-        await createColumn(scope, 'In Progress')
-        await createColumn(scope, 'Review')
-        await createColumn(scope, 'Done')
+        for (const name of ['Backlog', 'In Progress', 'Review', 'Done']) {
+          await createColumn(scope, name)
+        }
+        seeding.current = false
       })()
     }
-  }, [card?.type, childColumnCount, projectId, cardId])
+  }, [card?.type, board, isFetched, projectId, cardId, createColumn])
 
   if (!project || !card) {
     return (

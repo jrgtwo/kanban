@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { nanoid } from 'nanoid'
-import type { Card, ChecklistItem, Project } from '../db/types'
+import type { Card, ChecklistItem, Project } from '../../shared/types'
 import { ACCENT_TOKENS, romanize } from '../lib/accents'
-import { deleteCard, updateCard } from '../db/db'
+import { useCardActions } from '../api/hooks'
 
 export function ChecklistCard({
   card,
@@ -13,6 +13,7 @@ export function ChecklistCard({
   project: Project
   dragging?: boolean
 }) {
+  const { updateCard, deleteCard } = useCardActions()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(card.title)
   const [items, setItems] = useState<ChecklistItem[]>(card.checklistItems ?? [])

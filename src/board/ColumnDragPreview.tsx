@@ -1,4 +1,4 @@
-import type { Column } from '../db/types'
+import type { Column } from '../../shared/types'
 
 export function ColumnDragPreview({
   column,

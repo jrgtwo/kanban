@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { Card } from '../db/types'
-import { deleteCard, updateCard } from '../db/db'
+import type { Card } from '../../shared/types'
+import { useCardActions } from '../api/hooks'
 
 export function NoteCard({
   card,
@@ -9,6 +9,7 @@ export function NoteCard({
   card: Card
   dragging?: boolean
 }) {
+  const { updateCard, deleteCard } = useCardActions()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(card.title)
   const [notes, setNotes] = useState(card.notes ?? '')

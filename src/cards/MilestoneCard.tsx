@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { Card } from '../db/types'
-import { deleteCard, updateCard } from '../db/db'
+import type { Card } from '../../shared/types'
+import { useCardActions } from '../api/hooks'
 import { bandFor, formatMilestoneDate, type DateBand } from '../lib/dates'
 
 const BAND_COLOR: Record<DateBand, string> = {
@@ -24,6 +24,7 @@ export function MilestoneCard({
   card: Card
   dragging?: boolean
 }) {
+  const { updateCard, deleteCard } = useCardActions()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(card.title)
   const [dueStr, setDueStr] = useState(toDateInputValue(card.dueAt))

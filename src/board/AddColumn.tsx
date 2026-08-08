@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import type { Scope } from '../lib/scope'
-import { createColumn } from '../db/db'
+import { useColumnActions } from '../api/hooks'
 
 export function AddColumn({ scope }: { scope: Scope }) {
+  const { createColumn } = useColumnActions()
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
 

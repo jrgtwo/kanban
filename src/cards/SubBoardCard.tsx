@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { useLiveQuery } from 'dexie-react-hooks'
-import type { Card, Project } from '../db/types'
-import { db, deleteCard, updateCard } from '../db/db'
+import type { Card, Project } from '../../shared/types'
+import { useBoard, useCardActions } from '../api/hooks'
 import { ACCENT_TOKENS, romanize } from '../lib/accents'
 
 type WithViewTransition = Document & {
@@ -28,6 +27,7 @@ export function SubBoardCard({
   dragging?: boolean
 }) {
   const navigate = useNavigate()
+  const { updateCard, deleteCard } = useCardActions()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(card.title)
   const [notes, setNotes] = useState(card.notes ?? '')
@@ -37,14 +37,14 @@ export function SubBoardCard({
     setNotes(card.notes ?? '')
   }, [card.title, card.notes])
 
-  const childCards = useLiveQuery(
-    () => db.cards.where({ parentCardId: card.id }).toArray(),
-    [card.id],
-  )
-  const childColumns = useLiveQuery(
-    () => db.columns.where({ parentCardId: card.id }).sortBy('order'),
-    [card.id],
-  )
+  // The progress readout needs this card's own sub-board, which is a different
+  // board than the one this card is sitting on.
+  const { data: childBoard } = useBoard({
+    projectId: card.projectId,
+    parentCardId: card.id,
+  })
+  const childCards = childBoard?.cards
+  const childColumns = childBoard?.columns
 
   const tokens = ACCENT_TOKENS[project.accent]
 

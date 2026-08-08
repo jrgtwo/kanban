@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { nanoid } from 'nanoid'
-import type { CardType, ChecklistItem } from '../db/types'
+import type { CardType, ChecklistItem } from '../../shared/types'
 import type { Scope } from '../lib/scope'
-import { createCard } from '../db/db'
+import { useAddCard } from '../api/hooks'
 import { CardTypePicker } from '../cards/CardTypePicker'
 
 export function NewCardInput({
@@ -14,7 +14,11 @@ export function NewCardInput({
   columnId: string
   onClose: () => void
 }) {
+  const addCard = useAddCard()
   const [chosenType, setChosenType] = useState<CardType | null>(null)
+  // A card's board comes from its column on the server, so the scope is only
+  // needed here to decide whether a sub-board is offerable — sub-boards nest
+  // one level and the picker hides the option below that.
   const allowSubBoard = !scope.parentCardId
 
   if (!chosenType) {
@@ -26,7 +30,7 @@ export function NewCardInput({
       type={chosenType}
       onCancel={onClose}
       onCommit={async (input) => {
-        await createCard(scope, columnId, input)
+        await addCard(columnId, input)
         onClose()
       }}
     />

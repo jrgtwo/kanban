@@ -1,26 +1,18 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { createProject, db, deleteProject } from '../db/db'
-import type { Project } from '../db/types'
+import { useCreateProject, useDeleteProject, useProjects } from '../api/hooks'
+import type { Project } from '../../shared/types'
 import { ACCENT_TOKENS, romanize } from '../lib/accents'
 
 export function ProjectsIndex() {
   const [creating, setCreating] = useState(false)
-  const projects = useLiveQuery(() =>
-    db.projects.orderBy('createdAt').reverse().toArray(),
-  )
+  const { data: projects } = useProjects()
 
-  const counts = useLiveQuery(async () => {
-    if (!projects) return {}
-    const out: Record<string, number> = {}
-    await Promise.all(
-      projects.map(async (p) => {
-        out[p.id] = await db.cards.where({ projectId: p.id }).count()
-      }),
-    )
-    return out
-  }, [projects])
+  // The server counts cards per project in one grouped query, so this is a
+  // lookup rather than a second round of requests.
+  const counts: Record<string, number> = Object.fromEntries(
+    (projects ?? []).map((p) => [p.id, p.cardCount ?? 0]),
+  )
 
   if (projects === undefined) {
     return (
@@ -114,6 +106,7 @@ function ProjectCard({
   index: number
   taskCount: number
 }) {
+  const deleteProject = useDeleteProject()
   const tokens = ACCENT_TOKENS[project.accent]
   return (
     <li className="reveal group relative">
@@ -148,7 +141,7 @@ function ProjectCard({
                   `Delete "${project.name}" and all its cards? This cannot be undone.`,
                 )
               ) {
-                void deleteProject(project.id)
+                deleteProject.mutate(project.id)
               }
             }}
             className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-mute opacity-0 transition hover:text-vermillion group-hover:opacity-100"
@@ -219,6 +212,7 @@ function CreateProjectDialog({
   onClose: () => void
   existingCount: number
 }) {
+  const createProject = useCreateProject()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [accent, setAccent] = useState<Project['accent']>('vermillion')
@@ -227,7 +221,7 @@ function CreateProjectDialog({
   const handle = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
-    await createProject({
+    await createProject.mutateAsync({
       name,
       description,
       accent,

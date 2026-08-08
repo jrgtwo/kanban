@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import type { Card, Project } from '../db/types'
+import type { Card, Project } from '../../shared/types'
 import { ACCENT_TOKENS } from '../lib/accents'
-import { deleteCard, updateCard } from '../db/db'
+import { useCardActions } from '../api/hooks'
 
 export function TaskCard({
   card,
@@ -12,6 +12,7 @@ export function TaskCard({
   project: Project
   dragging?: boolean
 }) {
+  const { updateCard, deleteCard } = useCardActions()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(card.title)
   const [notes, setNotes] = useState(card.notes ?? '')

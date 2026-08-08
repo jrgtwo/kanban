@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
+import { useIsMutating } from '@tanstack/react-query'
 import {
   DndContext,
   DragOverlay,
@@ -18,8 +18,8 @@ import {
   horizontalListSortingStrategy,
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable'
-import { db, moveCard, reorderColumns } from '../db/db'
-import type { Card, Column, Project } from '../db/types'
+import { useBoard, useMoveCard, useReorderColumns } from '../api/hooks'
+import type { Card, Column, Project } from '../../shared/types'
 import type { Scope } from '../lib/scope'
 import { BoardColumn } from './BoardColumn'
 import { AddColumn } from './AddColumn'
@@ -33,33 +33,40 @@ export function Board({
   scope: Scope
   project: Project
 }) {
-  const columnsDb = useLiveQuery(async () => {
-    if (scope.parentCardId) {
-      return db.columns.where({ parentCardId: scope.parentCardId }).sortBy('order')
-    }
-    const all = await db.columns.where({ projectId: scope.projectId }).sortBy('order')
-    return all.filter((c) => !c.parentCardId)
-  }, [scope.projectId, scope.parentCardId])
-
-  const cardsDb = useLiveQuery(async () => {
-    if (scope.parentCardId) {
-      return db.cards.where({ parentCardId: scope.parentCardId }).sortBy('order')
-    }
-    const all = await db.cards.where({ projectId: scope.projectId }).sortBy('order')
-    return all.filter((c) => !c.parentCardId)
-  }, [scope.projectId, scope.parentCardId])
+  const { data: board } = useBoard(scope)
+  const moveCardMutation = useMoveCard(scope)
+  const reorderColumnsMutation = useReorderColumns(scope)
 
   const [localCards, setLocalCards] = useState<Card[] | null>(null)
   const [localColumns, setLocalColumns] = useState<Column[] | null>(null)
-  useEffect(() => {
-    if (cardsDb) setLocalCards(cardsDb)
-  }, [cardsDb])
-  useEffect(() => {
-    if (columnsDb) setLocalColumns(columnsDb)
-  }, [columnsDb])
 
   const [activeCard, setActiveCard] = useState<Card | null>(null)
   const [activeColumn, setActiveColumn] = useState<Column | null>(null)
+
+  /**
+   * The board mirrors server state into local arrays and mutates them
+   * synchronously during a drag — that is what makes the drag feel instant and
+   * it is deliberate, not incidental.
+   *
+   * ⚠ **The mirror must not be re-synced mid-flight.** The Dexie version wrote
+   * `if (cardsDb) setLocalCards(cardsDb)` unconditionally, which was harmless
+   * only because writes landed at drag end and nothing else could write. With a
+   * server, a refetch — or an agent moving a card in another process — can
+   * arrive while a drag is in progress or while the move is still on the wire,
+   * and the card visibly snaps back to where it started.
+   *
+   * So the sync is gated twice: not while a drag is in progress, and not while
+   * any mutation is in flight. Once both are clear, the invalidated refetch
+   * lands and the mirror catches up.
+   */
+  const dragging = activeCard !== null || activeColumn !== null
+  const inFlight = useIsMutating() > 0
+
+  useEffect(() => {
+    if (!board || dragging || inFlight) return
+    setLocalCards(board.cards)
+    setLocalColumns(board.columns)
+  }, [board, dragging, inFlight])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -183,7 +190,8 @@ export function Board({
         order: i,
       }))
       setLocalColumns(next)
-      await reorderColumns(next.map((c) => c.id))
+      // The server refuses a partial list, so send every column on this board.
+      await reorderColumnsMutation.mutateAsync(next.map((c) => c.id))
       return
     }
 
@@ -194,7 +202,13 @@ export function Board({
       .filter((t) => t.columnId === card.columnId)
       .sort((a, b) => a.order - b.order)
     const newIndex = colCards.findIndex((t) => t.id === activeId)
-    await moveCard(activeId, card.columnId, newIndex)
+
+    // If the server refuses, the mutation rolls the cache back and the mirror
+    // re-syncs from it once `inFlight` clears — so a rejected move returns the
+    // card to where it came from instead of stranding it where it was dropped.
+    await moveCardMutation
+      .mutateAsync({ cardId: activeId, toColumnId: card.columnId, toIndex: newIndex })
+      .catch(() => {})
   }
 
   return (

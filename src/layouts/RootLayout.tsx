@@ -1,5 +1,6 @@
 import { Link, useMatches } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
+import { useLiveUpdates } from '../api/useLiveUpdates'
 
 const formatDate = (d: Date) =>
   d
@@ -12,6 +13,10 @@ const formatDate = (d: Date) =>
     .toUpperCase()
 
 export function RootLayout({ children }: { children: ReactNode }) {
+  // One subscription for the whole app, mounted at the root so it survives
+  // route changes — the stream should not drop and reconnect every navigation.
+  useLiveUpdates()
+
   const matches = useMatches()
   const isBoard = matches.some((m) => m.routeId.includes('/p/$projectId'))
 
@@ -49,7 +54,7 @@ export function RootLayout({ children }: { children: ReactNode }) {
 
       <footer className="border-t border-[color:var(--color-rule)] px-8 py-4 md:px-12">
         <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-ink-mute">
-          Filed locally · IndexedDB · No server, no telemetry, no leakage
+          Filed locally · SQLite · No telemetry, no leakage
         </p>
       </footer>
     </div>

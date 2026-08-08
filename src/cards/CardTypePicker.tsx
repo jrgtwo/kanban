@@ -1,4 +1,4 @@
-import type { CardType } from '../db/types'
+import type { CardType } from '../../shared/types'
 
 const ALL_TYPES: { type: CardType; label: string }[] = [
   { type: 'task', label: 'task' },

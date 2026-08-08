@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { Card, Column, Project } from '../db/types'
+import type { Card, Column, Project } from '../../shared/types'
 import type { Scope } from '../lib/scope'
-import { deleteColumn, renameColumn } from '../db/db'
+import { useColumnActions } from '../api/hooks'
 import { SortableCardShell } from '../cards/SortableCardShell'
 import { NewCardInput } from './NewCardInput'
 
@@ -20,6 +20,7 @@ export function BoardColumn({
   project: Project
   scope: Scope
 }) {
+  const { renameColumn, deleteColumn } = useColumnActions()
   const [renaming, setRenaming] = useState(false)
   const [draft, setDraft] = useState(column.name)
   const [adding, setAdding] = useState(false)

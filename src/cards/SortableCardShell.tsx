@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { Card, Project } from '../db/types'
+import type { Card, Project } from '../../shared/types'
 import { TaskCard } from './TaskCard'
 import { NoteCard } from './NoteCard'
 import { ChecklistCard } from './ChecklistCard'

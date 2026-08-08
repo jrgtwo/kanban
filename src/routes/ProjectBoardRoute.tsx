@@ -1,29 +1,21 @@
 import { useState } from 'react'
 import { Link, useParams } from '@tanstack/react-router'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { db, renameProject } from '../db/db'
+import { useBoard, useUpdateProject } from '../api/hooks'
 import { ACCENT_TOKENS } from '../lib/accents'
 import { Board } from '../board/Board'
 import { BoardStats } from '../board/BoardStats'
 
 export function ProjectBoardRoute() {
   const { projectId } = useParams({ from: '/p/$projectId' })
-  const project = useLiveQuery(() => db.projects.get(projectId), [projectId])
 
-  const columnsDb = useLiveQuery(
-    async () => {
-      const all = await db.columns.where({ projectId }).sortBy('order')
-      return all.filter((c) => !c.parentCardId)
-    },
-    [projectId],
-  )
-  const cardsDb = useLiveQuery(
-    async () => {
-      const all = await db.cards.where({ projectId }).sortBy('order')
-      return all.filter((c) => !c.parentCardId)
-    },
-    [projectId],
-  )
+  // One read for the whole page — project, columns and cards together. `Board`
+  // below reads the same query key, so this is one request rather than two.
+  const { data: board } = useBoard({ projectId })
+  const project = board?.project
+  const columnsDb = board?.columns
+  const cardsDb = board?.cards
+
+  const updateProject = useUpdateProject()
 
   const [titleDraft, setTitleDraft] = useState('')
   const [editingTitle, setEditingTitle] = useState(false)
@@ -69,7 +61,10 @@ export function ProjectBoardRoute() {
                   onSubmit={async (e) => {
                     e.preventDefault()
                     if (titleDraft.trim())
-                      await renameProject(project.id, { name: titleDraft })
+                      await updateProject.mutateAsync({
+                        projectId: project.id,
+                        patch: { name: titleDraft },
+                      })
                     setEditingTitle(false)
                   }}
                 >

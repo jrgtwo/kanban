@@ -1,4 +1,4 @@
-import type { Card, Column, Project } from '../db/types'
+import type { Card, Column, Project } from '../../shared/types'
 import { ACCENT_TOKENS } from '../lib/accents'
 
 export function BoardStats({

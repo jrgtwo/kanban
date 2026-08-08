@@ -27,3 +27,7 @@ dist/
 docs/
 CLAUDE.md
 current-status.md
+
+# SQLite database and its WAL sidecars
+kanban.db
+kanban.db-*
