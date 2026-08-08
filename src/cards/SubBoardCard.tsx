@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import type { Card, Project } from '../../shared/types'
 import { useBoard, useCardActions } from '../api/hooks'
+import { excerpt } from '../lib/excerpt'
 import { ACCENT_TOKENS, romanize } from '../lib/accents'
 
 type WithViewTransition = Document & {
@@ -145,8 +146,8 @@ export function SubBoardCard({
               {card.title}
             </p>
             {card.notes && (
-              <p className="mt-1.5 pl-2 text-[12px] leading-[1.5] text-ink-soft">
-                {card.notes}
+              <p className="mt-1.5 line-clamp-2 pl-2 text-[12px] leading-[1.5] text-ink-soft">
+                {excerpt(card.notes)}
               </p>
             )}
             <p className="mt-2 pl-2 font-mono tabular text-[10px] uppercase tracking-[0.25em] text-ink-mute">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Card } from '../../shared/types'
 import { useCardActions } from '../api/hooks'
+import { excerpt } from '../lib/excerpt'
 
 export function NoteCard({
   card,
@@ -84,8 +85,8 @@ export function NoteCard({
             {card.title}
           </p>
           {card.notes && (
-            <p className="mt-1.5 font-display-wonk text-[13px] italic leading-[1.5] text-ink-soft whitespace-pre-wrap">
-              {card.notes}
+            <p className="mt-1.5 line-clamp-4 font-display-wonk text-[13px] italic leading-[1.5] text-ink-soft">
+              {excerpt(card.notes)}
             </p>
           )}
           {!dragging && (

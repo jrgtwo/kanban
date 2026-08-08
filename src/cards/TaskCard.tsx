@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Card, Project } from '../../shared/types'
 import { ACCENT_TOKENS } from '../lib/accents'
 import { useCardActions } from '../api/hooks'
+import { excerpt } from '../lib/excerpt'
 
 export function TaskCard({
   card,
@@ -90,8 +91,8 @@ export function TaskCard({
             {card.title}
           </p>
           {card.notes && (
-            <p className="mt-1.5 pl-2 text-[12px] leading-[1.5] text-ink-soft">
-              {card.notes}
+            <p className="mt-1.5 line-clamp-3 pl-2 text-[12px] leading-[1.5] text-ink-soft">
+              {excerpt(card.notes)}
             </p>
           )}
           {!dragging && (

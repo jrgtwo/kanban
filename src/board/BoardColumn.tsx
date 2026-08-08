@@ -120,7 +120,12 @@ export function BoardColumn({
         <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
           <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto p-3">
             {cards.map((card) => (
-              <SortableCardShell key={card.id} card={card} project={project} />
+              <SortableCardShell
+                key={card.id}
+                card={card}
+                project={project}
+                columnName={column.name}
+              />
             ))}
             {cards.length === 0 && !adding && (
               <p className="select-none px-2 py-6 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-ink-mute/60">
